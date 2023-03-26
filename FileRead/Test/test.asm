@@ -10,6 +10,7 @@ _start:                  ;tell linker entry point
 	
    mov [fd_in], eax
 
+read_loop:
     
    ;read from file
    mov eax, 3
@@ -18,19 +19,14 @@ _start:                  ;tell linker entry point
    mov edx, 1
    int 0x80
 
-   ; print the info 
-   mov eax, 4
-   mov ebx, 1
-   mov ecx, info
-   mov edx, 1
-   int 0x80
+   movzx esi, byte[info]
+   
 
-   ;read from file
-   mov eax, 3
-   mov ebx, [fd_in]
-   mov ecx, info
-   mov edx, 1
-   int 0x80
+   cmp eax, 0
+   je _end
+
+   cmp esi, 10
+   je _end
 
    ; print the info 
    mov eax, 4
@@ -38,25 +34,24 @@ _start:                  ;tell linker entry point
    mov ecx, info
    mov edx, 1
    int 0x80
-    
+   
+   jmp read_loop
+
+
+   _end:
+
    ; close the file
    mov eax, 6
    mov ebx, [fd_in]
    int  0x80    
-	
-
-       
+	  
    mov	eax,1             ;system call number (sys_exit)
    int	0x80              ;call kernel
 
 section	.data
 file_name db "myfile.txt", 0
 info db 1
-msg db 'Welcome to Tutorials Point'
-len equ  10
-
 
 section .bss
-fd_out resb 1
 fd_in  resb 1
 
