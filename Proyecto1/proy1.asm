@@ -3,8 +3,8 @@ section	.text
 	
 _start:                  
 
-   mov word [_d], 1631 ; implementar con input
-   mov word [_n], 5963 ; implementar con input
+   ;mov word [_d], 1631 ; implementar con input
+   ;mov word [_n], 5963 ; implementar con input
  
    ;open the input file
    mov  rax, 5
@@ -22,6 +22,105 @@ _start:
 	
    mov [fd_out], eax
 
+   ;open the key file
+   mov  rax, 5
+   mov  rbx, key_filename
+   mov  rcx, 0
+   int  0x80             ;call kernel
+
+   mov [fd_key], rax
+
+_startread_d:
+   xor esi, esi
+
+   ;read from file
+   mov eax, 3
+   mov ebx, [fd_key]
+   mov ecx, key
+   mov edx, 1
+   int 0x80
+
+   movzx esi, byte[key]
+
+   sub esi, '0'
+
+_read_d:
+
+   ;read from file
+   mov eax, 3
+   mov ebx, [fd_key]
+   mov ecx, key
+   mov edx, 1
+   int 0x80
+
+   movzx ecx, byte[key]
+
+   cmp ecx, 32
+   je _startread_n
+
+   sub ecx, '0'
+
+   mov eax, esi
+   mov esi, 10
+   mul esi
+   mov esi, eax
+
+   add esi, ecx
+
+   jmp _read_d
+
+_startread_n:
+   xor edi, edi
+
+   ;read from file
+   mov eax, 3
+   mov ebx, [fd_key]
+   mov ecx, key
+   mov edx, 1
+   int 0x80
+
+   movzx edi, byte[key]
+
+   sub edi, '0'
+
+_read_n:
+
+   mov eax, 3
+   mov ebx, [fd_key]
+   mov ecx, key
+   mov edx, 1
+   int 0x80
+
+   movzx ecx, byte[key]
+
+   cmp eax, 0
+   je _storeKey
+
+   cmp ecx, 10
+   je _storeKey
+
+   cmp ecx, 32
+   je _storeKey
+
+   sub ecx, '0'
+
+   mov eax, edi
+   mov edi, 10
+   mul edi
+   mov edi, eax
+
+   add edi, ecx
+
+   jmp _read_n
+
+_storeKey:
+   mov dword [_d], esi 
+   mov dword [_n], edi
+
+; Close key file
+   mov eax, 6
+   mov ebx, [fd_key]
+   int  0x80    
 
 _startB1:
 
@@ -132,7 +231,29 @@ _concatenate:
    add esi,edi
 
    mov dword [_c], esi ; Escribir esi en [_c]
-   jmp _modexp ; jmp a expmod y de expmod a _write
+   mov ecx, 0
+   jmp _lookup ; jmp a lookup, buscar si ya se hizo calculo
+
+_lookup:
+
+   cmp ecx, 250
+   je _modexp ; no se encontro en lookup table
+
+   mov eax, [lookup + 8*ecx]
+
+   cmp word [lookup + 8*ecx], 0
+   je _modexp
+
+   cmp si, [lookup+8*ecx]
+   je _found
+
+   inc ecx
+   jmp _lookup
+
+_found:
+   xor rax, rax
+   mov ax, [lookup+8*ecx+4]
+   jmp _write
 
 
 _modexp:
@@ -143,7 +264,7 @@ mov rax, [_c]
 
 _loop:
 cmp cx, 0
-jl _write
+jl _updatetable
 
 mov dx, 1
 shl dx, cl
@@ -172,6 +293,15 @@ mov rax, rdx
 
 sub cx, 1
 jmp _loop
+
+_updatetable:
+   mov ecx, [lu_counter]
+   mov edx, [_c]
+   mov dword [lookup+8*ecx], edx
+   mov dword [lookup+8*ecx + 4], eax
+   add ecx, 1
+   mov word [lu_counter], cx
+   jmp _write
 
 _write:   
    ; cuando termine de escribir pixel saltar a _startB1
@@ -243,13 +373,19 @@ _end:
 section	.data
 input_filename db "img.txt", 0
 output_filename db "output.txt", 0
+key_filename db "llaves.txt", 0
+
 info db 1
 c2w db 1
+key db 1
 
 _c dq 0
 _d dw 0
 _n dq 0
+lu_counter dq 0
 
 section .bss
+lookup resd 510  ; no tiene sentido que sea 510 (255*2), pero no se cual valor es optimo
 fd_in  resd 1
 fd_out  resb 1
+fd_key  resb 1
