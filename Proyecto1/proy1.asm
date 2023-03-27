@@ -15,12 +15,12 @@ _start:
    mov [fd_in], rax
 
    ;open the output file
-   mov  eax, 5
-   mov  ebx, output_filename
-   mov  ecx, 1
+   mov  rax, 5
+   mov  rbx, output_filename
+   mov  rcx, 1
    int  0x80             ;call kernel
 	
-   mov [fd_out], eax
+   mov [fd_out], rax
 
    ;open the key file
    mov  rax, 5
@@ -236,7 +236,7 @@ _concatenate:
 
 _lookup:
 
-   cmp ecx, 250
+   cmp ecx, 255
    je _modexp ; no se encontro en lookup table
 
    mov eax, [lookup + 8*ecx]
@@ -244,49 +244,51 @@ _lookup:
    cmp word [lookup + 8*ecx], 0
    je _modexp
 
-   cmp si, [lookup+8*ecx]
+   cmp esi, [lookup+8*ecx]
    je _found
 
-   inc ecx
+   add ecx, 1
    jmp _lookup
 
 _found:
    xor rax, rax
-   mov ax, [lookup+8*ecx+4]
+   mov rax, [lookup+8*ecx+4]
    jmp _write
 
 
 _modexp:
-mov bx, [_d]
+mov ebx, [_d]
 bsr cx, bx
 sub cx, 1
+xor rax,rax
 mov rax, [_c]
 
 _loop:
 cmp cx, 0
-jl _updatetable
+jl _checkres
 
-mov dx, 1
-shl dx, cl
-and dx, bx
-cmp dx, 0
+mov edx, 1
+shl edx, cl
+and edx, ebx
+cmp edx, 0
 je _bitFalse
 
 mul rax
+xor rsi, rsi
 mov rsi, [_c]
 mul rsi
-mov dx, 0
+mov rdx, 0
 mov rsi, [_n]
 div rsi
 mov rax, rdx
 
-sub cx, 1
+sub ecx, 1
 jmp _loop
 
 
 _bitFalse:
 mul rax
-mov dx, 0
+xor rdx, rdx
 mov rsi, [_n]
 div rsi
 mov rax, rdx
@@ -294,13 +296,22 @@ mov rax, rdx
 sub cx, 1
 jmp _loop
 
+_checkres:
+cmp rax, 256
+jge _defectuoso
+jmp _write
+
+_defectuoso:
+mov rax, 0
+jmp _write
+
 _updatetable:
    mov ecx, [lu_counter]
    mov edx, [_c]
    mov dword [lookup+8*ecx], edx
-   mov dword [lookup+8*ecx + 4], eax
+   mov dword [lookup+ 8*ecx + 4], eax
    add ecx, 1
-   mov word [lu_counter], cx
+   mov dword [lu_counter], ecx
    jmp _write
 
 _write:   
@@ -384,8 +395,10 @@ _d dw 0
 _n dq 0
 lu_counter dq 0
 
+;lookup: times 512 dd 0
+
 section .bss
-lookup resd 510  ; no tiene sentido que sea 510 (255*2), pero no se cual valor es optimo
+lookup resd 512  ; no tiene sentido que sea 510 (255*2), pero no se cual valor es optimo
 fd_in  resd 1
-fd_out  resb 1
+fd_out  resd 1
 fd_key  resb 1
