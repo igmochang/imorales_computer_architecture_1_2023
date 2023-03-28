@@ -1,2 +1,2 @@
 # imorales_computer_architecture_1_2023
-Para proyectos relacionados a curso CE-4301
+x86 NASM RSA dencrypter with the use of modular exponentiation
