@@ -9,4 +9,4 @@ Tools used:
 - Subprocess library
 
 Instrucciones de uso:
-- Guardar imagen encriptada en archivo de texto con nombre "img.txt" y los datos de la llave privada en el archivo "llaves.txt" de manera que primero esté escrito "d" y luego "n", los pixeles deben estar en una sola línea. Correr el programa de python gui.py, este va a generar dos archivos, input.png y output.png, los cuales correspondendon a la imagen encriptada y desencriptada respectivamente. Además, se van a visualizar ambas imagenes en una ventana creada usando Tkinter. 
+- Guardar imagen encriptada en archivo de texto con nombre "img.txt" y los datos de la llave privada en el archivo "llaves.txt" de manera que primero esté escrito "d" y luego "n", los pixeles deben estar en una sola línea. Correr el programa de python gui.py, este va a generar dos archivos, input.png y output.png, los cuales corresponden a la imagen encriptada y desencriptada respectivamente. Además, se van a visualizar ambas imagenes en una ventana creada usando Tkinter. 
