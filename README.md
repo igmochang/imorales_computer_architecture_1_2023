@@ -1,5 +1,5 @@
 # imorales_computer_architecture_1_2023
-x86 NASM RSA dencrypter with the use of modular exponentiation
+x86 NASM RSA dencrypter with the use of modular exponentiation and a LUT
 
 Tools used:
 - x86 NASM
